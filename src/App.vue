@@ -1,28 +1,54 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div>
+    <h1>BrewDog Beers</h1>
+    <div class="drop-down-container">
+      <beer-select :beers="beers"></beer-select>
+    </div>
+    <beer-detail v-if="selectedBeer" :beer="selectedBeer"></beer-detail>
+    <favourite-beers v-if="favouriteBeers.length > 0" :beers="favouriteBeers"></favourite-beers>
   </div>
+
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import BeerSelect from './components/BeerSelector.vue'
+import BeerDetail from './components/BeerDetail.vue'
+import FavouriteBeers from './components/FavouriteBeers.vue'
+import { eventBus } from './main.js'
 
 export default {
-  name: 'App',
+  name: 'app',
+  data(){
+    return {
+      beers: [],
+      selectedBeer: null,
+      favouriteBeers: []
+    }
+  },
+  mounted() {
+    fetch('https://api.punkapi.com/v2/beers?per_page=80')
+    .then(res => res.json())
+    .then(beers => this.beers = beers)
+
+    eventBus.$on("beer-selected", (beer) => this.selectedBeer = beer)
+    eventBus.$on("favourite-beer", (beer) => {
+      if (!this.favouriteBeers.includes(beer)) {
+        this.favouriteBeers.push(beer)
+        };
+      })
+    eventBus.$on("remove-beer", (beer) => {
+      let favourites= this.favouriteBeers.filter((favourite) => favourite !== beer)
+      this.favouriteBeers = favourites
+    })
+  },
   components: {
-    HelloWorld
+    "beer-select": BeerSelect,
+    "beer-detail": BeerDetail,
+    "favourite-beers": FavouriteBeers
   }
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+
 </style>
